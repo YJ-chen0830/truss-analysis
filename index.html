@@ -308,6 +308,17 @@ function calcTruss(){
     '<table><tr><th colspan="2">支承反力</th></tr>'+reactRows+'</table>'+
     '<table style="margin-top:14px"><tr><th>桿件</th><th>軸力（拉正壓負）</th></tr>'+rows+'</table>';
 
+  if(window.JRH && JRH.saveOutput){
+    var maxTension=null, maxTensionMember='';
+    memberForces.forEach(function(F,k){
+      if(F>0 && (maxTension===null || F>maxTension)){
+        maxTension=F;
+        maxTensionMember='M'+(k+1)+'（N'+members[k].n1+'–N'+members[k].n2+'）';
+      }
+    });
+    JRH.saveOutput({maxTension_kN:maxTension, maxTensionMember:maxTensionMember});
+  }
+
   var p='';
   p+='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
   p+='  桁架分析計算過程（節點法，矩陣式聯立求解）\n';
