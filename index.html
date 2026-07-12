@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>桁架分析 | Truss Analysis</title>
+<script src="https://yj-chen0830.github.io/jrh-core/jrh-core.js?v=3" defer></script>
+<style>
+  :root{--navy:#0b1f3a;--navy2:#13284a;--gold:#c9a14a;--gold2:#e0bf6e;--bg:#f5f3ee;--ink:#1c2530;--line:#d8d2c2;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Noto Sans TC","Segoe UI",sans-serif;background:var(--bg);color:var(--ink);}
+  header{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#f5f3ee;padding:28px 32px;}
+  header h1{margin:0;font-size:22px;}
+  header span{color:var(--gold2);font-size:13px;display:block;margin-top:4px;}
+  main{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}
+  .grid{display:grid;grid-template-columns:400px 1fr;gap:24px;}
+  @media(max-width:900px){.grid{grid-template-columns:1fr;}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:22px 24px;box-shadow:0 2px 8px rgba(0,0,0,.05);margin-bottom:20px;}
+  .card h2{font-size:14.5px;margin:0 0 18px;color:var(--navy);font-weight:700;display:flex;align-items:center;gap:8px;border-bottom:2px solid var(--gold);padding-bottom:10px;}
+  label{display:block;font-size:12px;color:#666;margin:10px 0 4px;font-weight:500;}
+  input,select{width:100%;padding:8px 11px;border:1.5px solid var(--line);border-radius:7px;font-size:13.5px;background:#fafaf8;}
+  input:focus,select:focus{outline:none;border-color:var(--gold);}
+  .sec{font-size:12px;font-weight:700;color:var(--navy);margin:16px 0 6px;border-left:4px solid var(--gold);padding-left:9px;letter-spacing:.04em;text-transform:uppercase;}
+  .note{font-size:11.5px;color:#999;margin-top:12px;line-height:1.75;background:#f9f7f2;border-radius:6px;padding:9px 12px;}
+  button.calc-btn{margin-top:16px;width:100%;padding:12px;border:none;border-radius:8px;background:var(--navy);color:#fff;font-size:14.5px;font-weight:700;cursor:pointer;}
+  button.calc-btn:hover{background:var(--navy2);}
+  button.pro-btn{margin-top:12px;width:100%;padding:12px;border:none;border-radius:8px;background:var(--gold);color:var(--navy);font-size:14.5px;font-weight:700;cursor:pointer;}
+  button.pro-btn:hover{filter:brightness(1.08);}
+  table{width:100%;border-collapse:collapse;margin-top:10px;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+  th{background:var(--navy);color:#f5f3ee;font-weight:600;font-size:12px;padding:9px 10px;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  td{padding:9px 10px;font-size:13px;border-bottom:1px solid var(--line);}
+  tr:nth-child(even) td{background:#f9f7f3;}
+  td:last-child{text-align:right;font-weight:700;}
+  .ok{color:#1a7d3a;font-weight:700;}.ng{color:#c0392b;font-weight:700;}
+  .comp{color:#c0392b;font-weight:700;}.tens{color:#1a6ea8;font-weight:700;}
+  details.proc{margin-top:16px;border:1px solid var(--line);border-radius:8px;background:#fafaf8;overflow:hidden;}
+  details.proc summary{cursor:pointer;padding:10px 14px;font-weight:700;font-size:13px;color:var(--navy);user-select:none;list-style:none;display:flex;align-items:center;gap:6px;}
+  details.proc summary::before{content:"▶";font-size:10px;transition:transform .2s;}
+  details[open].proc summary::before{transform:rotate(90deg);}
+  details.proc pre{margin:0;padding:12px 16px 16px;font-family:"Courier New",monospace;font-size:11px;line-height:1.8;white-space:pre-wrap;color:#2c3e50;border-top:1px solid var(--line);max-height:480px;overflow-y:auto;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+  .row4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;}
+  .proj-section{background:#fff;border:1px solid var(--gold);border-radius:10px;padding:18px 22px;margin-bottom:20px;}
+  .proj-section h3{margin:0 0 12px;color:var(--navy);font-size:14px;font-weight:700;}
+  .proj-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  @media(max-width:600px){.proj-grid{grid-template-columns:1fr;}}
+  .itemRow{border:1px solid var(--line);border-radius:8px;padding:10px;margin-top:10px;background:#fafaf8;position:relative;}
+  .itemRow .del{position:absolute;right:8px;top:8px;background:#c0392b;color:#fff;border:none;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:12px;padding:0;}
+  .item-label{font-size:12px;font-weight:600;color:#0b1f3a;margin-bottom:6px;}
+  .add-btn{margin-top:10px;width:100%;padding:9px;border:1.5px dashed var(--gold);border-radius:7px;background:#fff;color:var(--navy);font-size:13px;font-weight:600;cursor:pointer;}
+  @media print{
+    header,.no-print{display:none!important;}
+    body{background:#fff;margin:0;font-size:9pt;line-height:1.5;color:#111;}
+    main{padding:0;max-width:100%!important;}
+    .grid{grid-template-columns:1fr!important;gap:10pt!important;}
+    .card{box-shadow:none!important;border:1px solid #ccc!important;border-radius:4pt!important;padding:10pt 12pt!important;break-inside:avoid;}
+    .card h2{font-size:10.5pt!important;padding-bottom:6pt!important;margin-bottom:9pt!important;}
+    table{border:1px solid #bbb!important;border-radius:0!important;margin-top:6pt!important;}
+    th{font-size:8pt!important;padding:5pt 7pt!important;background:#0b1f3a!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    td{font-size:8.5pt!important;padding:5pt 7pt!important;}
+    details.proc{display:block!important;margin-top:10pt!important;border:1pt solid #0b1f3a!important;border-radius:4pt!important;break-inside:avoid;background:#f9f9f6!important;max-height:none!important;}
+    details.proc>summary{display:none!important;}
+    details.proc::before{content:"📋  計算過程（供第三方檢核）";display:block;font-weight:700;font-size:8pt;color:#0b1f3a;padding:6pt 10pt 4pt;border-bottom:1px solid #ccc;letter-spacing:.04em;}
+    details.proc>pre{font-size:6.5pt!important;line-height:1.5!important;white-space:pre-wrap!important;padding:6pt 10pt 10pt!important;color:#1a1a1a!important;font-family:"Courier New",monospace!important;}
+    .proj-section{border:1.5pt solid #0b1f3a!important;border-radius:4pt!important;}
+    button.pro-btn,button.calc-btn,.add-btn,.del{display:none!important;}
+    @page{margin:15mm 12mm;size:A4;}
+  }
+</style>
+</head>
+<body data-tool="trs">
+<header>
+  <a href="https://yj-chen0830.github.io/engineering-hub/" style="color:var(--gold2);font-size:12.5px;text-decoration:none;display:inline-block;margin-bottom:8px;">← 返回工程計算中心</a>
+  <h1>桁架分析 (Truss Analysis)</h1>
+  <span>節點法（Method of Joints，矩陣求解）· 靜定平面桁架桿件內力與反力</span>
+</header>
+<main>
+
+<div class="proj-section no-print" id="projSection">
+  <h3>📁 專案資訊（列印時帶入計算書封面）</h3>
+  <div class="proj-grid">
+    <div><label>工程名稱</label><input id="pj-name" placeholder="○○工程"></div>
+    <div><label>工程地點</label><input id="pj-loc" placeholder="○○市○○區"></div>
+    <div><label>承造廠商</label><input id="pj-contractor" placeholder="○○營造股份有限公司"></div>
+    <div><label>文件編號</label><input id="pj-docno" placeholder="TRS-CAL-001"></div>
+    <div><label>計算者</label><input id="pj-calc" placeholder="姓名"></div>
+    <div><label>審核者</label><input id="pj-review" placeholder="姓名"></div>
+    <div><label>計算日期</label><input id="pj-date" type="date"></div>
+  </div>
+</div>
+
+<div class="grid">
+  <div>
+    <div class="card">
+      <h2>節點（座標與支承）</h2>
+      <div id="nodesContainer"></div>
+      <button class="add-btn" onclick="addNode()">+ 新增節點</button>
+    </div>
+    <div class="card">
+      <h2>桿件（連接節點）</h2>
+      <div id="membersContainer"></div>
+      <button class="add-btn" onclick="addMember()">+ 新增桿件</button>
+    </div>
+    <div class="card">
+      <h2>外部載重</h2>
+      <div id="loadsContainer"></div>
+      <button class="add-btn" onclick="addLoad()">+ 新增載重</button>
+      <button class="calc-btn" onclick="calcTruss()">計算桁架內力</button>
+      <div class="note">採節點法（Method of Joints）之矩陣式解法：對每一節點建立 ΣFx=0、ΣFy=0 平衡方程式，聯立求解所有桿件軸力與反力分量，結果與逐節點手算之節點法完全等價。僅適用於靜定桁架（m+r=2n），若輸入使桁架變為靜不定或機構（不穩定），將顯示警告。假設所有接點為鉸接（無彎矩傳遞），載重僅作用於節點。</div>
+    </div>
+  </div>
+  <div>
+    <div class="card">
+      <h2>計算結果</h2>
+      <div id="trs-result"><p style="color:#888">尚未計算</p></div>
+      <details class="proc" id="trs-proc" style="display:none">
+        <summary>📋 計算過程（供第三方檢核）</summary>
+        <pre id="trs-proc-text"></pre>
+      </details>
+      <button class="pro-btn no-print" onclick="openPro()">📄 產出計算書 PDF</button>
+    </div>
+  </div>
+</div>
+
+</main>
+<script>
+var nodes = [];
+var members = [];
+var loads = [];
+var idc = 0;
+
+function addNode(x,y,support){
+  nodes.push({id:idc++, x:(x!==undefined?x:0), y:(y!==undefined?y:0), support:(support||'free')});
+  renderNodes();
+}
+function delNode(id){ nodes = nodes.filter(function(n){return n.id!==id;}); renderNodes(); }
+function renderNodes(){
+  var c = document.getElementById('nodesContainer');
+  c.innerHTML = '';
+  nodes.forEach(function(n, idx){
+    var div = document.createElement('div');
+    div.className = 'itemRow';
+    div.innerHTML =
+      '<button class="del" onclick="delNode('+n.id+')">×</button>'+
+      '<div class="item-label">節點 N'+(idx+1)+'</div>'+
+      '<div class="row3">'+
+        '<div><label>X (m)</label><input type="number" value="'+n.x+'" onchange="nodes['+idx+'].x=parseFloat(this.value)||0"></div>'+
+        '<div><label>Y (m)</label><input type="number" value="'+n.y+'" onchange="nodes['+idx+'].y=parseFloat(this.value)||0"></div>'+
+        '<div><label>支承</label><select onchange="nodes['+idx+'].support=this.value">'+
+          '<option value="free"'+(n.support==='free'?' selected':'')+'>自由</option>'+
+          '<option value="pin"'+(n.support==='pin'?' selected':'')+'>鉸支承</option>'+
+          '<option value="rollery"'+(n.support==='rollery'?' selected':'')+'>滾支承(限制Y)</option>'+
+          '<option value="rollerx"'+(n.support==='rollerx'?' selected':'')+'>滾支承(限制X)</option>'+
+        '</select></div>'+
+      '</div>';
+    c.appendChild(div);
+  });
+}
+
+function addMember(n1,n2){
+  members.push({id:idc++, n1:(n1!==undefined?n1:1), n2:(n2!==undefined?n2:2)});
+  renderMembers();
+}
+function delMember(id){ members = members.filter(function(m){return m.id!==id;}); renderMembers(); }
+function renderMembers(){
+  var c = document.getElementById('membersContainer');
+  c.innerHTML = '';
+  members.forEach(function(m, idx){
+    var div = document.createElement('div');
+    div.className = 'itemRow';
+    div.innerHTML =
+      '<button class="del" onclick="delMember('+m.id+')">×</button>'+
+      '<div class="item-label">桿件 M'+(idx+1)+'</div>'+
+      '<div class="row2">'+
+        '<div><label>起始節點（N#）</label><input type="number" min="1" value="'+m.n1+'" onchange="members['+idx+'].n1=parseInt(this.value)||1"></div>'+
+        '<div><label>終止節點（N#）</label><input type="number" min="1" value="'+m.n2+'" onchange="members['+idx+'].n2=parseInt(this.value)||1"></div>'+
+      '</div>';
+    c.appendChild(div);
+  });
+}
+
+function addLoad(node,fx,fy){
+  loads.push({id:idc++, node:(node!==undefined?node:1), fx:(fx!==undefined?fx:0), fy:(fy!==undefined?fy:0)});
+  renderLoads();
+}
+function delLoad(id){ loads = loads.filter(function(l){return l.id!==id;}); renderLoads(); }
+function renderLoads(){
+  var c = document.getElementById('loadsContainer');
+  c.innerHTML = '';
+  loads.forEach(function(l, idx){
+    var div = document.createElement('div');
+    div.className = 'itemRow';
+    div.innerHTML =
+      '<button class="del" onclick="delLoad('+l.id+')">×</button>'+
+      '<div class="item-label">載重 L'+(idx+1)+'</div>'+
+      '<div class="row3">'+
+        '<div><label>節點（N#）</label><input type="number" min="1" value="'+l.node+'" onchange="loads['+idx+'].node=parseInt(this.value)||1"></div>'+
+        '<div><label>Fx (kN，右為正)</label><input type="number" value="'+l.fx+'" onchange="loads['+idx+'].fx=parseFloat(this.value)||0"></div>'+
+        '<div><label>Fy (kN，上為正)</label><input type="number" value="'+l.fy+'" onchange="loads['+idx+'].fy=parseFloat(this.value)||0"></div>'+
+      '</div>';
+    c.appendChild(div);
+  });
+}
+
+// ── 高斯消去法解線性方程組 Ax=b（含部分主元） ──
+function solveLinear(A, b){
+  var n = A.length;
+  var M = A.map(function(row,i){ return row.concat([b[i]]); });
+  for (var col=0; col<n; col++){
+    var piv = col;
+    for (var r=col+1; r<n; r++) if (Math.abs(M[r][col]) > Math.abs(M[piv][col])) piv = r;
+    if (Math.abs(M[piv][col]) < 1e-9) return null; // singular -> unstable/indeterminate
+    if (piv!==col){ var tmp=M[piv]; M[piv]=M[col]; M[col]=tmp; }
+    var pv = M[col][col];
+    for (var j=col; j<=n; j++) M[col][j] /= pv;
+    for (var r2=0; r2<n; r2++){
+      if (r2===col) continue;
+      var f = M[r2][col];
+      if (f===0) continue;
+      for (var j2=col; j2<=n; j2++) M[r2][j2] -= f*M[col][j2];
+    }
+  }
+  return M.map(function(row){ return row[n]; });
+}
+
+function openPro(){ JRH.checkEmail(function(){ jrhPrint('桁架分析計算書'); }); }
+function f2(x){return x.toFixed(2);}
+function f3(x){return x.toFixed(3);}
+function f4(x){return x.toFixed(4);}
+
+function calcTruss(){
+  var n = nodes.length;
+  var m = members.length;
+  // reaction DOFs per node based on support type
+  var reactDofs = []; // list of {nodeIdx, dir:'x'|'y'}
+  nodes.forEach(function(node, i){
+    if (node.support==='pin'){ reactDofs.push({nodeIdx:i,dir:'x'}); reactDofs.push({nodeIdx:i,dir:'y'}); }
+    else if (node.support==='rollery'){ reactDofs.push({nodeIdx:i,dir:'y'}); }
+    else if (node.support==='rollerx'){ reactDofs.push({nodeIdx:i,dir:'x'}); }
+  });
+  var r = reactDofs.length;
+  var totalUnknowns = m + r;
+  var totalEqs = 2*n;
+
+  var resDiv = document.getElementById('trs-result');
+  if (totalUnknowns !== totalEqs){
+    resDiv.innerHTML = '<p class="ng">桿件數+反力數 = '+totalUnknowns+'，方程式數(2×節點數) = '+totalEqs+'。'+
+      (totalUnknowns<totalEqs?'系統為機構（不穩定），自由度不足。':'系統為靜不定，本工具僅適用靜定桁架，無法求解。')+'</p>';
+    document.getElementById('trs-proc').style.display='none';
+    return;
+  }
+
+  // build member geometry: direction cosine/sine from n1 to n2, length
+  var memGeo = members.map(function(mem){
+    var i1 = mem.n1-1, i2 = mem.n2-1;
+    var N1 = nodes[i1], N2 = nodes[i2];
+    var dx = N2.x-N1.x, dy = N2.y-N1.y;
+    var L = Math.sqrt(dx*dx+dy*dy);
+    return {i1:i1, i2:i2, dx:dx, dy:dy, L:L, cx:dx/L, cy:dy/L};
+  });
+
+  // assemble A (2n x totalUnknowns), b (2n)
+  var A = [];
+  var b = [];
+  for (var i=0;i<n;i++){ A.push(new Array(totalUnknowns).fill(0)); A.push(new Array(totalUnknowns).fill(0)); b.push(0); b.push(0); }
+
+  memGeo.forEach(function(g, k){
+    // at node i1: force pulls toward i2 if tension => component (cx,cy)
+    A[2*g.i1][k]   += g.cx;
+    A[2*g.i1+1][k] += g.cy;
+    // at node i2: force pulls toward i1 if tension => component (-cx,-cy)
+    A[2*g.i2][k]   += -g.cx;
+    A[2*g.i2+1][k] += -g.cy;
+  });
+  reactDofs.forEach(function(rd, k){
+    var col = m+k;
+    if (rd.dir==='x') A[2*rd.nodeIdx][col] += 1;
+    else A[2*rd.nodeIdx+1][col] += 1;
+  });
+  loads.forEach(function(ld){
+    var i = ld.node-1;
+    if (i<0||i>=n) return;
+    b[2*i]   -= ld.fx;
+    b[2*i+1] -= ld.fy;
+  });
+
+  var x = solveLinear(A, b);
+  if (!x){
+    resDiv.innerHTML = '<p class="ng">方程組奇異無解——桁架幾何可能造成機構（不穩定桿件配置），請檢查節點/桿件輸入。</p>';
+    document.getElementById('trs-proc').style.display='none';
+    return;
+  }
+
+  var memberForces = memGeo.map(function(g,k){ return x[k]; });
+  var reactions = reactDofs.map(function(rd,k){ return {node:rd.nodeIdx, dir:rd.dir, val:x[m+k]}; });
+
+  var rows = memberForces.map(function(F,k){
+    var mem = members[k];
+    var tag = F>=0 ? '<span class="tens">拉力 T</span>' : '<span class="comp">壓力 C</span>';
+    return '<tr><td>M'+(k+1)+'（N'+mem.n1+'–N'+mem.n2+'）</td><td>'+f3(Math.abs(F))+' kN '+tag+'</td></tr>';
+  }).join('');
+  var reactRows = reactions.map(function(rc){
+    return '<tr><td>N'+(rc.node+1)+' 反力 R'+rc.dir.toUpperCase()+'</td><td>'+f3(rc.val)+' kN</td></tr>';
+  }).join('');
+
+  resDiv.innerHTML =
+    '<table><tr><th colspan="2">支承反力</th></tr>'+reactRows+'</table>'+
+    '<table style="margin-top:14px"><tr><th>桿件</th><th>軸力（拉正壓負）</th></tr>'+rows+'</table>';
+
+  var p='';
+  p+='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+  p+='  桁架分析計算過程（節點法，矩陣式聯立求解）\n';
+  p+='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
+  p+='【輸入】\n';
+  p+='  節點數 n='+n+'，桿件數 m='+m+'，反力分量數 r='+r+'\n';
+  p+='  靜定檢核：m+r = '+m+'+'+r+' = '+totalUnknowns+' = 2n = '+totalEqs+' ✓ 靜定\n\n';
+  nodes.forEach(function(node,i){
+    p+='  N'+(i+1)+'：('+f2(node.x)+', '+f2(node.y)+')，支承='+({free:'自由',pin:'鉸支承',rollery:'滾支承(限Y)',rollerx:'滾支承(限X)'}[node.support])+'\n';
+  });
+  p+='\n';
+  members.forEach(function(mem,k){
+    var g=memGeo[k];
+    p+='  M'+(k+1)+'：N'+mem.n1+'→N'+mem.n2+'，方向餘弦 (cx,cy)=('+f4(g.cx)+', '+f4(g.cy)+')，長度L='+f3(g.L)+' m\n';
+  });
+  p+='\n';
+  loads.forEach(function(ld,k){
+    p+='  載重L'+(k+1)+'：作用於N'+ld.node+'，Fx='+ld.fx+' kN，Fy='+ld.fy+' kN\n';
+  });
+  p+='\n【一】平衡方程式組裝\n';
+  p+='  對每一節點 i 建立 ΣFx=0、ΣFy=0：\n';
+  p+='  Σ(桿件軸力×方向餘弦) + Σ(反力分量) + 外部載重 = 0\n';
+  p+='  共 '+totalEqs+' 條方程式，'+totalUnknowns+' 個未知數（'+m+' 桿力 + '+r+' 反力），聯立求解。\n\n';
+  p+='【二】求解結果 — 支承反力\n';
+  reactions.forEach(function(rc){
+    p+='  N'+(rc.node+1)+' R'+rc.dir.toUpperCase()+' = '+f3(rc.val)+' kN\n';
+  });
+  p+='\n【三】求解結果 — 桿件軸力（正=拉力，負=壓力）\n';
+  memberForces.forEach(function(F,k){
+    var mem=members[k];
+    p+='  M'+(k+1)+'（N'+mem.n1+'–N'+mem.n2+'）= '+f3(F)+' kN　→　'+(F>=0?'拉力 Tension':'壓力 Compression')+'\n';
+  });
+  p+='\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+  p+='  註：本解法為節點法（Method of Joints）之矩陣聯立求解形式，與逐節點手算代入結果完全等價，\n';
+  p+='  僅適用於靜定平面桁架（假設鉸接、載重僅作用於節點）。\n';
+  p+='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+  document.getElementById('trs-proc-text').textContent=p;
+  document.getElementById('trs-proc').style.display='';
+}
+
+// default example: simple triangular truss (matches hand-calc worked example)
+addNode(0,0,'pin');
+addNode(4,0,'rollery');
+addNode(2,3,'free');
+addMember(1,2);
+addMember(1,3);
+addMember(2,3);
+addLoad(3,0,-10);
+calcTruss();
+</script>
+<script>
+window.jrhDocMeta={
+ "doc": "桁架分析計算書",
+ "codes": [
+  "節點法（Method of Joints）— 靜力平衡矩陣聯立解法",
+  "適用靜定平面桁架分析（m+r=2n）"
+ ],
+ "notes": [
+  "本工具假設所有節點為鉸接（無彎矩傳遞），載重僅作用於節點，桿件僅承受軸力。",
+  "僅適用於靜定桁架；若輸入配置造成靜不定或機構（不穩定），本工具將顯示警告而不強行求解。",
+  "桿件挫屈（壓力桿件）容量檢核未包含在本工具內，應由結構工程師依桿件細長比另行檢討。",
+  "本計算書應經結構工程技師簽證後，始得作為正式送審文件。"
+ ]
+};
+</script>
+</body>
+</html>
